@@ -1,0 +1,84 @@
+﻿@{
+    ViewData["Title"] = "Upload CSV";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Upload CSV File</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Upload CSV File</h1>
+
+    <form id="csvUploadForm" enctype="multipart/form-data">
+        <input type="file" id="csvFileInput" name="csvFile" accept=".csv" />
+        <button type="submit">Submit</button>
+    </form>
+
+    <div id="errorMessage" style="color: red; display: none;"></div>
+    <div id="successMessage" style="color: green; display: none;"></div>
+    <ul id="errorList" style="color: red; display: none;"></ul>
+
+    <script>
+        $(document).ready(function () {
+            $('#csvUploadForm').on('submit', function (e) {
+                e.preventDefault();
+
+                var fileInput = document.getElementById('csvFileInput');
+                var file = fileInput.files[0];
+
+                // if (!file) {
+                //     showError('Please select a file.');
+                //     return;
+                // }
+
+                // if (file.type !== 'text/csv' || !file.name.endsWith('.csv')) {
+                //     showError('Please upload a valid CSV file.');
+                //     return;
+                // }
+
+                var formData = new FormData();
+                formData.append("csvFile", file);
+
+                $.ajax({
+                    url: '@Url.Action("UploadCsv", "Home")',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (response) {
+                        if (response.success) {
+                            $('#errorMessage').hide();
+                            $('#errorList').hide();
+                            $('#successMessage').text(response.message).show();
+                            setTimeout(function () {
+                                location.reload();
+                            }, 3000);
+                        } else {
+                            showError(response.message);
+                            if (response.errors) {
+                                var errorList = $('#errorList');
+                                errorList.empty();
+                                response.errors.forEach(function (error) {
+                                    errorList.append('<li>' + error + '</li>');
+                                });
+                                errorList.show();
+                            }
+                        }
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        showError('File upload failed: ' + errorThrown);
+                    }
+                });
+            });
+
+            function showError(message) {
+                $('#successMessage').hide();
+                $('#errorMessage').text(message).show();
+            }
+        });
+    </script>
+</body>
+</html>
